@@ -3,8 +3,14 @@
 Each fetcher takes a company entry from config.json, the search terms, and a
 keep(job_id, title) predicate, and yields a Job for every posting that passes it.
 Fetchers only do per-job detail requests for postings that pass keep().
+
+Job.description is filled in when the ATS returns it cheaply. For boards where it
+costs an extra request per job, it is left as None and DESCRIBERS fetches it later,
+only for jobs that have already passed the title and location filters.
 """
+import json
 import re
+import time
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 from datetime import datetime, timezone
@@ -13,7 +19,7 @@ from urllib.parse import quote
 
 import requests
 
-Job = namedtuple("Job", "company job_id title location url posted_date")
+Job = namedtuple("Job", "company job_id title location url posted_date description", defaults=(None,))
 
 TIMEOUT = 30
 MAX_RESULTS = 2000  # per search term; guards against runaway pagination
@@ -27,24 +33,30 @@ session.headers["User-Agent"] = (
 )
 
 
-def get_json(url, **kwargs):
-    r = session.get(url, timeout=TIMEOUT, **kwargs)
+def request(method, url, **kwargs):
+    for attempt in range(4):
+        r = session.request(method, url, timeout=TIMEOUT, **kwargs)
+        if r.status_code != 429 or attempt == 3:
+            break
+        time.sleep(float(r.headers.get("Retry-After") or 2 ** (attempt + 1)))  # rate limited: back off
     r.raise_for_status()
-    return r.json()
+    return r
+
+
+def get_json(url, **kwargs):
+    return request("GET", url, **kwargs).json()
 
 
 def post_json(url, body):
-    r = session.post(url, json=body, timeout=TIMEOUT)
-    r.raise_for_status()
-    return r.json()
+    return request("POST", url, json=body).json()
 
 
 def from_epoch(ts):
     return datetime.fromtimestamp(int(ts), timezone.utc).date().isoformat() if ts else None
 
 
-def join(*parts):
-    return "; ".join(dict.fromkeys(p for p in parts if p))  # drop blanks and duplicates
+def join(*parts, sep="; "):
+    return sep.join(dict.fromkeys(p for p in parts if p))  # drop blanks and duplicates
 
 
 def workday(c, terms, keep):
@@ -73,17 +85,18 @@ def workday(c, terms, keep):
                 info = get_json(api + path)["jobPostingInfo"]
                 location = join(info.get("location"), *info.get("additionalLocations", []),
                                 (info.get("country") or {}).get("descriptor"), info.get("remoteType"))
-                yield Job(c["name"], job_id, title, location,
-                          info.get("externalUrl") or f"{base}/{c['site']}{path}", info.get("startDate"))
+                yield Job(c["name"], job_id, title, location, info.get("externalUrl") or f"{base}/{c['site']}{path}",
+                          info.get("startDate"), info.get("jobDescription", ""))
 
 
 def greenhouse(c, terms, keep):
-    for j in get_json(f"https://boards-api.greenhouse.io/v1/boards/{c['slug']}/jobs")["jobs"]:
+    data = get_json(f"https://boards-api.greenhouse.io/v1/boards/{c['slug']}/jobs", params={"content": "true"})
+    for j in data["jobs"]:
         job_id = str(j["id"])
         if keep(job_id, j["title"]):
             posted = j.get("first_published") or j.get("updated_at")
             yield Job(c["name"], job_id, j["title"], (j.get("location") or {}).get("name", ""),
-                      j["absolute_url"], posted[:10] if posted else None)
+                      j["absolute_url"], posted[:10] if posted else None, j.get("content", ""))
 
 
 def lever(c, terms, keep):
@@ -93,9 +106,11 @@ def lever(c, terms, keep):
             location = join(*(cat.get("allLocations") or [cat.get("location")]),
                             COUNTRY_NAMES.get(j.get("country")),
                             "Remote" if j.get("workplaceType") == "remote" else None)
+            description = join(j.get("descriptionPlain"), *(l.get("content") for l in j.get("lists", [])),
+                               j.get("additionalPlain"), sep="\n")
             created = j.get("createdAt")
             yield Job(c["name"], j["id"], j["text"], location, j["hostedUrl"],
-                      from_epoch(created // 1000) if created else None)
+                      from_epoch(created // 1000) if created else None, description)
 
 
 def eightfold(c, terms, keep):
@@ -124,11 +139,19 @@ def eightfold(c, terms, keep):
                 if v2:
                     locations = p.get("locations") or [p.get("location")]
                     url, ts, mode = p["canonicalPositionUrl"], p.get("t_create"), p.get("work_location_option")
-                else:
+                    description = p.get("job_description", "")
+                else:  # PCSX search results have no description; eightfold_description fetches it
                     locations = p.get("locations", []) + p.get("standardizedLocations", [])
                     url, ts, mode = f"https://{host}{p['positionUrl']}", p.get("postedTs"), p.get("workLocationOption")
+                    description = None
                 remote = "Remote" if (mode or "").startswith("remote") else None
-                yield Job(c["name"], job_id, p["name"], join(*locations, remote), url, from_epoch(ts))
+                yield Job(c["name"], job_id, p["name"], join(*locations, remote), url, from_epoch(ts), description)
+
+
+def eightfold_description(c, job):
+    data = get_json(f"https://{c['host']}/api/pcsx/position_details",
+                    params={"position_id": job.job_id, "domain": c["domain"], "hl": "en"})
+    return data["data"].get("jobDescription", "")
 
 
 def oracle(c, terms, keep):
@@ -155,10 +178,18 @@ def oracle(c, terms, keep):
                 if not keep(job_id, r["Title"]):
                     continue
                 remote = r.get("WorkplaceType") if "remote" in (r.get("WorkplaceType") or "").lower() else None
+                # The list often says only "Canada"; the detail has the work site's city and the description.
+                detail = get_json(f"https://{host}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails"
+                                  f'?expand=all&onlyData=true&finder=ById;Id="{job_id}",siteNumber={site}')["items"]
+                sites = [w for d in detail for w in d.get("workLocation", []) + d.get("otherWorkLocations", [])]
                 location = join(r.get("PrimaryLocation"), COUNTRY_NAMES.get(r.get("PrimaryLocationCountry")),
-                                *(s.get("Name") for s in r.get("secondaryLocations", [])), remote)
+                                *(s.get("Name") for s in r.get("secondaryLocations", [])),
+                                *(f"{w.get('TownOrCity')}, {w.get('Region2')}" for w in sites), remote)
+                description = join(*(d.get(k) for d in detail for k in (
+                    "ExternalDescriptionStr", "ExternalResponsibilitiesStr", "ExternalQualificationsStr")), sep="\n")
                 yield Job(c["name"], job_id, r["Title"], location,
-                          f"https://{host}/hcmUI/CandidateExperience/en/sites/{site}/job/{job_id}", r.get("PostedDate"))
+                          f"https://{host}/hcmUI/CandidateExperience/en/sites/{site}/job/{job_id}",
+                          r.get("PostedDate"), description)
 
 
 def ukg(c, terms, keep):
@@ -188,8 +219,15 @@ def ukg(c, terms, keep):
                     parts += [loc.get("LocalizedDescription"), addr.get("City"),
                               (addr.get("State") or {}).get("Name"), (addr.get("Country") or {}).get("Name")]
                 posted = o.get("PostedDate")
+                # BriefDescription is only the opening paragraph; ukg_description fetches the full text.
                 yield Job(c["name"], job_id, o["Title"], join(*parts),
                           f"{base}/OpportunityDetail?opportunityId={job_id}", posted[:10] if posted else None)
+
+
+def ukg_description(c, job):
+    html = request("GET", job.url).text  # the detail page embeds the posting as JSON
+    m = re.search(r'"Description":("(?:[^"\\]|\\.)*")', html)
+    return json.loads(m.group(1)) if m else ""
 
 
 def bamboohr(c, terms, keep):
@@ -204,13 +242,16 @@ def bamboohr(c, terms, keep):
                       f"https://{c['slug']}.bamboohr.com/careers/{job_id}", None)
 
 
+def bamboohr_description(c, job):
+    data = get_json(f"https://{c['slug']}.bamboohr.com/careers/{job.job_id}/detail")
+    return data["result"]["jobOpening"].get("description", "")
+
+
 def successfactors(c, terms, keep):
     # SuccessFactors career sites have no public JSON API, but they do publish an RSS search feed.
     done = set()
     for term in terms:
-        r = session.get(f"https://{c['host']}/services/rss/job/",
-                        params={"locale": "en_US", "keywords": term}, timeout=TIMEOUT)
-        r.raise_for_status()
+        r = request("GET", f"https://{c['host']}/services/rss/job/", params={"locale": "en_US", "keywords": term})
         for item in ET.fromstring(r.content).iter("item"):
             link = item.findtext("link", "").split("?")[0]
             m = re.search(r"/(\d+)/?$", link)
@@ -226,7 +267,8 @@ def successfactors(c, terms, keep):
                 continue
             pub = item.findtext("pubDate")
             yield Job(c["name"], job_id, title, location, link,
-                      parsedate_to_datetime(pub).date().isoformat() if pub else None)
+                      parsedate_to_datetime(pub).date().isoformat() if pub else None,
+                      item.findtext("description", ""))
 
 
 def jibe(c, terms, keep):
@@ -250,8 +292,9 @@ def jibe(c, terms, keep):
                     continue
                 extra = [f"{a.get('city')}, {a.get('country')}" for a in d.get("additional_locations") or []]
                 posted = d.get("posted_date")
+                description = join(d.get("description"), d.get("responsibilities"), d.get("qualifications"), sep="\n")
                 yield Job(c["name"], job_id, d["title"], join(d.get("full_location"), d.get("country"), *extra),
-                          f"{base}/careers-home/jobs/{d['slug']}", posted[:10] if posted else None)
+                          f"{base}/careers-home/jobs/{d['slug']}", posted[:10] if posted else None, description)
 
 
 FETCHERS = {
@@ -264,4 +307,10 @@ FETCHERS = {
     "bamboohr": bamboohr,
     "successfactors": successfactors,
     "jibe": jibe,
+}
+
+DESCRIBERS = {
+    "eightfold": eightfold_description,
+    "ukg": ukg_description,
+    "bamboohr": bamboohr_description,
 }

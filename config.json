@@ -1,14 +1,19 @@
 {
   "title_keywords": ["intern", "internship", "co-op", "coop", "student"],
   "location_keywords": [
-    "canada", "remote",
-    "ontario", "quebec", "québec", "british columbia", "alberta", "manitoba",
-    "saskatchewan", "nova scotia", "new brunswick", "newfoundland",
-    "toronto", "ottawa", "kanata", "nepean", "markham", "mississauga", "brampton",
-    "vaughan", "richmond hill", "waterloo", "kitchener", "montreal", "montréal",
-    "longueuil", "vancouver", "burnaby", "calgary", "edmonton"
+    "toronto", "north york", "etobicoke", "scarborough, on", "mississauga", "brampton",
+    "caledon", "markham", "vaughan", "concord, on", "richmond hill", "thornhill",
+    "newmarket, on", "aurora, on", "stouffville", "pickering, on", "ajax, on",
+    "whitby, on", "oshawa", "oakville", "burlington, on", "milton, on",
+    "ottawa", "kanata", "nepean", "barrhaven", "stittsville", "orléans, on", "orleans, on"
   ],
-  "search_terms": ["intern", "co-op", "student"],
+  "duration_patterns": [
+    "(?<!within )(?<!last )(?<!past )(?<!next )\\b(?:12|16|twelve|sixteen)[\\s-]*months?\\b"
+  ],
+  "other_duration_patterns": [
+    "(?<!within )(?<!last )(?<!past )(?<!next )\\b(?:\\d{1,2}|two|three|four|six|eight)[\\s-]*months?\\b(?!\\s+of\\b)"
+  ],
+  "search_terms":["intern", "co-op", "student"],
   "companies": [
     {"name": "AMD", "ats": "jibe", "host": "careers.amd.com"},
     {"name": "Intel", "ats": "workday", "host": "intel.wd1", "tenant": "intel", "site": "External"},

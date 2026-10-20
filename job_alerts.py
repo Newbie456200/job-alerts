@@ -6,6 +6,7 @@
     python job_alerts.py --only AMD --only Intel --dry-run
 """
 import argparse
+import html
 import json
 import os
 import re
@@ -17,7 +18,7 @@ from pathlib import Path
 
 import requests
 
-from fetchers import FETCHERS
+from fetchers import DESCRIBERS, FETCHERS
 
 ROOT = Path(__file__).parent
 CONFIG_PATH = ROOT / "config.json"
@@ -35,8 +36,14 @@ def open_db(path):
 def record(db, jobs, matched_ids):
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     db.executemany("INSERT OR IGNORE INTO seen VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
-        (*j, j.job_id in matched_ids, now) for j in jobs])
+        (j.company, j.job_id, j.title, j.location, j.url, j.posted_date, j.job_id in matched_ids, now)
+        for j in jobs])
     db.commit()
+
+
+def plain_text(text):
+    # Descriptions arrive as HTML, sometimes escaped twice (Greenhouse).
+    return re.sub(r"<[^>]+>", " ", html.unescape(html.unescape(text or "")))
 
 
 def post_to_discord(webhook, jobs):
@@ -67,6 +74,13 @@ def main():
     words = "|".join(map(re.escape, config["title_keywords"]))
     title_re = re.compile(rf"\b(?:{words})s?\b", re.IGNORECASE)
     location_words = [w.lower() for w in config["location_keywords"]]
+    duration_re = re.compile("|".join(config["duration_patterns"]), re.IGNORECASE)
+    other_duration_re = re.compile("|".join(config["other_duration_patterns"]), re.IGNORECASE)
+
+    def wanted_term(job):
+        # Keep 12/16-month postings and postings that don't state a length; drop ones that only state other lengths.
+        text = job.title + "\n" + plain_text(job.description)
+        return bool(duration_re.search(text)) or not other_duration_re.search(text)
 
     webhook = os.environ.get("DISCORD_WEBHOOK_URL")
     if not webhook and not (args.dry_run or args.seed):
@@ -86,11 +100,16 @@ def main():
 
         try:
             jobs = list(FETCHERS[company["ats"]](company, config["search_terms"], keep))
-            matches = [j for j in jobs if any(w in j.location.lower() for w in location_words)]
-            print(f"{name}: {len(jobs)} new title matches, {len(matches)} in Canada/remote")
+            located = [j for j in jobs if any(w in j.location.lower() for w in location_words)]
+            describe = DESCRIBERS.get(company["ats"])
+            located = [j._replace(description=describe(company, j)) if j.description is None and describe else j
+                       for j in located]
+            matches = [j for j in located if wanted_term(j)]
+            print(f"{name}: {len(jobs)} new title matches, {len(located)} in target locations, "
+                  f"{len(matches)} after the 12-16 month filter")
             if args.dry_run:
-                for j in matches:
-                    print(f"    {j.title} | {j.location} | {j.posted_date} | {j.url}")
+                for j in located:
+                    print(f"    {'+' if j in matches else '-'} {j.title} | {j.location} | {j.posted_date} | {j.url}")
                 continue
             if not args.seed:
                 post_to_discord(webhook, matches)
