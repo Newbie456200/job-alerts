@@ -28,13 +28,15 @@ jobs:
 
       - run: python job_alerts.py
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_WEBHOOK_URL_MATERIALS: ${{ secrets.DISCORD_WEBHOOK_URL_MATERIALS }}
+          # Each feed in config.json names the secret holding its Discord webhook; any name works.
+          REPO_SECRETS: ${{ toJSON(secrets) }}
+          # Seen jobs are stored per repo owner, so copies of this repo start with a clean history.
+          SEEN_DB: seen/${{ github.repository_owner }}.db
 
-      - name: Commit seen.db
+      - name: Commit seen jobs
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git add seen.db
+          git add seen/
           git diff --cached --quiet || { git commit -m "Update seen jobs [skip ci]" && git push; }

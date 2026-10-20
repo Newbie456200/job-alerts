@@ -1,0 +1,12 @@
+{
+  "description": "Any industry: searches the Simplify internship list, which covers hundreds of companies. Set field_keywords in your feed to the role words you care about.",
+  "field_keywords": [],
+  "companies": [
+    {
+      "name": "Simplify internship list",
+      "ats": "simplify",
+      "title_filter": false,
+      "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json"
+    }
+  ]
+}

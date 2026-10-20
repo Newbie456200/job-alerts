@@ -1,0 +1,186 @@
+{
+  "description": "Nuclear, materials, project management, safety and medical roles at energy, manufacturing, medical-device and pharma employers. Nuclear/medical/pharma employers skip the field keyword check.",
+  "field_keywords": [
+    "nuclear",
+    "material",
+    "metallurgical",
+    "metallurgy",
+    "polymer",
+    "ceramic",
+    "composite",
+    "corrosion",
+    "project management",
+    "project manager",
+    "project coordinator",
+    "project controls",
+    "project engineering",
+    "program management",
+    "safety",
+    "health and safety",
+    "EHS",
+    "HSE",
+    "medical",
+    "biomedical",
+    "medical device"
+  ],
+  "companies": [
+    {
+      "name": "Ontario Power Generation",
+      "field_filter": false,
+      "ats": "successfactors",
+      "host": "jobs.opg.com"
+    },
+    {
+      "name": "Bruce Power",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "brucepower.wd3",
+      "tenant": "brucepower",
+      "site": "BrucePower"
+    },
+    {
+      "name": "Kinectrics",
+      "field_filter": false,
+      "ats": "successfactors",
+      "host": "careers.kinectrics.com"
+    },
+    {
+      "name": "BWXT",
+      "field_filter": false,
+      "ats": "successfactors",
+      "host": "careers.bwxt.com"
+    },
+    {
+      "name": "Westinghouse",
+      "field_filter": false,
+      "ats": "successfactors",
+      "host": "careers.westinghousenuclear.com"
+    },
+    {
+      "name": "Hydro One",
+      "ats": "successfactors",
+      "host": "jobs.hydroone.com"
+    },
+    {
+      "name": "Metrolinx",
+      "ats": "oracle",
+      "host": "ehtc.fa.ca2.oraclecloud.com",
+      "site": "CX_1"
+    },
+    {
+      "name": "Enbridge",
+      "ats": "workday",
+      "host": "enbridge.wd3",
+      "tenant": "enbridge",
+      "site": "enbridge_careers"
+    },
+    {
+      "name": "Hatch",
+      "ats": "successfactors",
+      "host": "jobs.hatch.com"
+    },
+    {
+      "name": "Celestica",
+      "ats": "successfactors",
+      "host": "careers.celestica.com"
+    },
+    {
+      "name": "Magna",
+      "ats": "workday",
+      "host": "magna.wd3",
+      "tenant": "magna",
+      "site": "Magna"
+    },
+    {
+      "name": "General Motors",
+      "ats": "workday",
+      "host": "generalmotors.wd5",
+      "tenant": "generalmotors",
+      "site": "Careers_GM"
+    },
+    {
+      "name": "RTX (Pratt & Whitney, Collins)",
+      "ats": "workday",
+      "host": "globalhr.wd5",
+      "tenant": "globalhr",
+      "site": "REC_RTX_Ext_Gateway"
+    },
+    {
+      "name": "Bombardier",
+      "ats": "successfactors",
+      "host": "jobs.bombardier.com"
+    },
+    {
+      "name": "Honeywell",
+      "ats": "oracle",
+      "host": "ibqbjb.fa.ocs.oraclecloud.com",
+      "site": "Honeywell"
+    },
+    {
+      "name": "MDA Space",
+      "ats": "ukg",
+      "host": "recruiting.ultipro.ca",
+      "tenant": "MAC5000MCDW",
+      "boards": [
+        "664818ff-3594-4bec-9f30-3394e59e19f3",
+        "7667adcc-47ae-477a-9183-0d8ef8bc0748"
+      ]
+    },
+    {
+      "name": "Medtronic",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "medtronic.wd1",
+      "tenant": "medtronic",
+      "site": "MedtronicCareers"
+    },
+    {
+      "name": "Stryker",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "stryker.wd1",
+      "tenant": "stryker",
+      "site": "StrykerCareers"
+    },
+    {
+      "name": "Baxter",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "baxter.wd1",
+      "tenant": "baxter",
+      "site": "baxter"
+    },
+    {
+      "name": "Abbott",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "abbott.wd5",
+      "tenant": "abbott",
+      "site": "abbottcareers"
+    },
+    {
+      "name": "GE HealthCare",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "gehc.wd5",
+      "tenant": "gehc",
+      "site": "GEHC_ExternalSite"
+    },
+    {
+      "name": "Thermo Fisher",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "thermofisher.wd5",
+      "tenant": "thermofisher",
+      "site": "ThermoFisherCareers"
+    },
+    {
+      "name": "Sanofi",
+      "field_filter": false,
+      "ats": "workday",
+      "host": "sanofi.wd3",
+      "tenant": "sanofi",
+      "site": "SanofiCareers"
+    }
+  ]
+}

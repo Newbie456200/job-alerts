@@ -1,0 +1,285 @@
+{
+  "description": "Chip design, FPGA, analog/mixed-signal, layout, verification, firmware and related hardware roles at semiconductor and hardware employers, plus the Simplify internship list for other companies.",
+  "field_keywords": [
+    "asic",
+    "fpga",
+    "rtl",
+    "soc",
+    "vlsi",
+    "silicon",
+    "ic",
+    "integrated circuit",
+    "rfic",
+    "chip",
+    "semiconductor",
+    "analog",
+    "mixed signal",
+    "mixed-signal",
+    "digital design",
+    "digital ic",
+    "hardware design",
+    "logic design",
+    "design verification",
+    "functional verification",
+    "formal verification",
+    "validation",
+    "emulation",
+    "physical design",
+    "layout",
+    "pcb",
+    "dft",
+    "design-for-test",
+    "design for test",
+    "design automation",
+    "design methodology",
+    "cad",
+    "eda",
+    "ip",
+    "msip",
+    "dsp",
+    "gpu",
+    "rf",
+    "signal integrity",
+    "packaging",
+    "characterization",
+    "post-silicon",
+    "pre-silicon",
+    "firmware",
+    "embedded",
+    "hardware"
+  ],
+  "companies": [
+    {
+      "name": "AMD",
+      "ats": "jibe",
+      "host": "careers.amd.com"
+    },
+    {
+      "name": "Intel",
+      "ats": "workday",
+      "host": "intel.wd1",
+      "tenant": "intel",
+      "site": "External"
+    },
+    {
+      "name": "NXP",
+      "ats": "workday",
+      "host": "nxp.wd3",
+      "tenant": "nxp",
+      "site": "careers"
+    },
+    {
+      "name": "Analog Devices",
+      "ats": "workday",
+      "host": "analogdevices.wd1",
+      "tenant": "analogdevices",
+      "site": "External"
+    },
+    {
+      "name": "Microchip",
+      "ats": "workday",
+      "host": "microchiphr.wd5",
+      "tenant": "microchiphr",
+      "site": "External"
+    },
+    {
+      "name": "Semtech",
+      "ats": "workday",
+      "host": "semtech.wd1",
+      "tenant": "semtech",
+      "site": "SemtechCareers"
+    },
+    {
+      "name": "Ciena",
+      "ats": "workday",
+      "host": "ciena.wd5",
+      "tenant": "ciena",
+      "site": "Careers"
+    },
+    {
+      "name": "Cisco",
+      "ats": "workday",
+      "host": "cisco.wd5",
+      "tenant": "cisco",
+      "site": "Cisco_Careers"
+    },
+    {
+      "name": "Broadcom",
+      "ats": "workday",
+      "host": "broadcom.wd1",
+      "tenant": "broadcom",
+      "site": "External_Career"
+    },
+    {
+      "name": "Lumentum",
+      "ats": "workday",
+      "host": "lumentum.wd5",
+      "tenant": "lumentum",
+      "site": "LITE"
+    },
+    {
+      "name": "Cadence",
+      "ats": "workday",
+      "host": "cadence.wd1",
+      "tenant": "cadence",
+      "site": "External_Careers"
+    },
+    {
+      "name": "Curtiss-Wright",
+      "ats": "workday",
+      "host": "curtisswright.wd1",
+      "tenant": "curtisswright",
+      "site": "CW_External_Career_Site"
+    },
+    {
+      "name": "Tenstorrent",
+      "ats": "greenhouse",
+      "slug": "tenstorrent"
+    },
+    {
+      "name": "Astera Labs",
+      "ats": "greenhouse",
+      "slug": "asteralabs"
+    },
+    {
+      "name": "SiTime",
+      "ats": "greenhouse",
+      "slug": "sitimecorporation"
+    },
+    {
+      "name": "Aviya Aerospace",
+      "ats": "lever",
+      "slug": "aviyatech"
+    },
+    {
+      "name": "Qualcomm",
+      "ats": "eightfold",
+      "host": "careers.qualcomm.com",
+      "domain": "qualcomm.com"
+    },
+    {
+      "name": "Infineon",
+      "ats": "eightfold",
+      "host": "jobs.infineon.com",
+      "domain": "infineon.com"
+    },
+    {
+      "name": "Ericsson",
+      "ats": "eightfold",
+      "host": "jobs.ericsson.com",
+      "domain": "ericsson.com"
+    },
+    {
+      "name": "STMicroelectronics",
+      "ats": "eightfold",
+      "host": "stmicroelectronics.eightfold.ai",
+      "domain": "stmicroelectronics.com",
+      "api": "v2"
+    },
+    {
+      "name": "Texas Instruments",
+      "ats": "oracle",
+      "host": "edbz.fa.us2.oraclecloud.com",
+      "site": "CX"
+    },
+    {
+      "name": "Nokia",
+      "ats": "oracle",
+      "host": "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com",
+      "site": "CX_1"
+    },
+    {
+      "name": "Honeywell",
+      "ats": "oracle",
+      "host": "ibqbjb.fa.ocs.oraclecloud.com",
+      "site": "Honeywell"
+    },
+    {
+      "name": "MDA Space",
+      "ats": "ukg",
+      "host": "recruiting.ultipro.ca",
+      "tenant": "MAC5000MCDW",
+      "boards": [
+        "664818ff-3594-4bec-9f30-3394e59e19f3",
+        "7667adcc-47ae-477a-9183-0d8ef8bc0748"
+      ]
+    },
+    {
+      "name": "Ranovus",
+      "ats": "bamboohr",
+      "slug": "ranovus"
+    },
+    {
+      "name": "Skyworks",
+      "ats": "successfactors",
+      "host": "careers.skyworksinc.com"
+    },
+    {
+      "name": "NVIDIA",
+      "ats": "workday",
+      "host": "nvidia.wd5",
+      "tenant": "nvidia",
+      "site": "NVIDIAExternalCareerSite"
+    },
+    {
+      "name": "Altera",
+      "ats": "workday",
+      "host": "altera.wd1",
+      "tenant": "altera",
+      "site": "Altera"
+    },
+    {
+      "name": "Marvell",
+      "ats": "workday",
+      "host": "marvell.wd1",
+      "tenant": "marvell",
+      "site": "MarvellCareers"
+    },
+    {
+      "name": "Hitachi Energy",
+      "ats": "workday",
+      "host": "hitachi.wd1",
+      "tenant": "hitachi",
+      "site": "hitachi"
+    },
+    {
+      "name": "Thales",
+      "ats": "workday",
+      "host": "thales.wd3",
+      "tenant": "thales",
+      "site": "Careers"
+    },
+    {
+      "name": "BlackBerry",
+      "ats": "workday",
+      "host": "bb.wd3",
+      "tenant": "bb",
+      "site": "BlackBerry"
+    },
+    {
+      "name": "Astera Labs (early careers)",
+      "ats": "greenhouse",
+      "slug": "asteraearlycareer2027"
+    },
+    {
+      "name": "Lightmatter",
+      "ats": "greenhouse",
+      "slug": "lightmatter"
+    },
+    {
+      "name": "Cerebras",
+      "ats": "ashby",
+      "slug": "cerebras"
+    },
+    {
+      "name": "IBM",
+      "ats": "ibm"
+    },
+    {
+      "name": "Simplify internship list",
+      "ats": "simplify",
+      "title_filter": false,
+      "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json"
+    }
+  ]
+}

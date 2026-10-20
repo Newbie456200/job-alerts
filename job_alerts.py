@@ -1,7 +1,8 @@
 """Poll employer job boards for new intern/co-op postings and post them to Discord.
 
 config.json holds shared defaults and a list of feeds. Each feed has its own companies,
-optional keyword overrides, and the name of the env var holding its Discord webhook.
+optional keyword overrides, and the name of the secret (or env var) holding its Discord webhook.
+See README.md for setup.
 
     python job_alerts.py                  # fetch, post new matches to each feed's webhook, record them
     python job_alerts.py --dry-run        # print new matches; no posting, no database writes
@@ -25,7 +26,10 @@ from fetchers import DESCRIBERS, FETCHERS
 
 ROOT = Path(__file__).parent
 CONFIG_PATH = ROOT / "config.json"
-DB_PATH = ROOT / "seen.db"
+PRESETS_DIR = ROOT / "presets"
+# The workflow sets SEEN_DB to a file named after the repo owner, so a copy of this repo starts
+# with its own empty history instead of inheriting someone else's seen jobs.
+DB_PATH = Path(os.environ.get("SEEN_DB") or ROOT / "seen.db")
 MS_SOFTWARE = re.compile(r"\bMS[\s-]+(?:Office|Excel|Word|PowerPoint|Outlook|Teams|Project|Access|Visio|SQL)\b",
                          re.IGNORECASE)
 
@@ -33,6 +37,7 @@ MS_SOFTWARE = re.compile(r"\bMS[\s-]+(?:Office|Excel|Word|PowerPoint|Outlook|Tea
 def open_db(path, legacy_feed, read_only=False):
     db = sqlite3.connect(":memory:")
     if path.exists() or not read_only:
+        path.parent.mkdir(parents=True, exist_ok=True)
         disk = sqlite3.connect(path)
         if read_only:  # work on an in-memory copy so a dry run never changes the file
             disk.backup(db)
@@ -61,6 +66,27 @@ def record(db, feed, source, jobs, matched_ids):
         (feed, source, j.job_id, j.title, j.location, j.url, j.posted_date, j.job_id in matched_ids, now)
         for j in jobs])
     db.commit()
+
+
+def load_feed(defaults, feed):
+    """Defaults, then the feed's preset (presets/<name>.json), then the feed's own settings.
+
+    "companies" in the feed replaces the preset's list; "extra_companies" adds to it.
+    """
+    preset = {}
+    if feed.get("preset"):
+        preset = json.loads((PRESETS_DIR / f"{feed['preset']}.json").read_text(encoding="utf-8"))
+        preset.pop("description", None)
+    merged = {**defaults, **preset, **feed}
+    merged["companies"] = feed.get("companies", preset.get("companies", [])) + feed.get("extra_companies", [])
+    return merged
+
+
+def find_secret(name):
+    # An env var of that name, or a repo secret of that name: the workflow passes all repo secrets
+    # as JSON, so a feed can use any secret name without editing the workflow.
+    secrets = json.loads(os.environ.get("REPO_SECRETS") or "{}")
+    return os.environ.get(name) or secrets.get(name)
 
 
 def word_pattern(words):
@@ -117,7 +143,7 @@ def run_feed(feed, db, args):
                 return bool(undergrad_re.search(text))
         return True
 
-    webhook = os.environ.get(feed["webhook_env"])
+    webhook = find_secret(feed["webhook_env"])
     if not webhook and not (args.dry_run or args.seed):
         print(f"::warning::{name}: {feed['webhook_env']} is not set, skipping this feed")
         return 0, 0
@@ -172,7 +198,7 @@ def main():
     args = parser.parse_args()
 
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    feeds = [{**config["defaults"], **feed} for feed in config["feeds"]]
+    feeds = [load_feed(config["defaults"], feed) for feed in config["feeds"]]
     db = open_db(DB_PATH, legacy_feed=feeds[0]["name"], read_only=args.dry_run)
 
     wanted = {f.lower() for f in args.feed}
