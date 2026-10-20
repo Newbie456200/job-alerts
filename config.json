@@ -1,46 +1,91 @@
 {
-  "title_keywords": ["intern", "internship", "co-op", "coop", "student"],
-  "location_keywords": [
-    "toronto", "north york", "etobicoke", "scarborough, on", "mississauga", "brampton",
-    "caledon", "markham", "vaughan", "concord, on", "richmond hill", "thornhill",
-    "newmarket, on", "aurora, on", "stouffville", "pickering, on", "ajax, on",
-    "whitby, on", "oshawa", "oakville", "burlington, on", "milton, on",
-    "ottawa", "kanata", "nepean", "barrhaven", "stittsville", "orléans, on", "orleans, on"
-  ],
-  "duration_patterns": [
-    "(?<!within )(?<!last )(?<!past )(?<!next )\\b(?:12|16|twelve|sixteen)[\\s-]*months?\\b"
-  ],
-  "other_duration_patterns": [
-    "(?<!within )(?<!last )(?<!past )(?<!next )\\b(?:\\d{1,2}|two|three|four|six|eight)[\\s-]*months?\\b(?!\\s+of\\b)"
-  ],
-  "search_terms":["intern", "co-op", "student"],
-  "companies": [
-    {"name": "AMD", "ats": "jibe", "host": "careers.amd.com"},
-    {"name": "Intel", "ats": "workday", "host": "intel.wd1", "tenant": "intel", "site": "External"},
-    {"name": "NXP", "ats": "workday", "host": "nxp.wd3", "tenant": "nxp", "site": "careers"},
-    {"name": "Analog Devices", "ats": "workday", "host": "analogdevices.wd1", "tenant": "analogdevices", "site": "External"},
-    {"name": "Microchip", "ats": "workday", "host": "microchiphr.wd5", "tenant": "microchiphr", "site": "External"},
-    {"name": "Semtech", "ats": "workday", "host": "semtech.wd1", "tenant": "semtech", "site": "SemtechCareers"},
-    {"name": "Ciena", "ats": "workday", "host": "ciena.wd5", "tenant": "ciena", "site": "Careers"},
-    {"name": "Cisco", "ats": "workday", "host": "cisco.wd5", "tenant": "cisco", "site": "Cisco_Careers"},
-    {"name": "Broadcom", "ats": "workday", "host": "broadcom.wd1", "tenant": "broadcom", "site": "External_Career"},
-    {"name": "Lumentum", "ats": "workday", "host": "lumentum.wd5", "tenant": "lumentum", "site": "LITE"},
-    {"name": "Cadence", "ats": "workday", "host": "cadence.wd1", "tenant": "cadence", "site": "External_Careers"},
-    {"name": "Curtiss-Wright", "ats": "workday", "host": "curtisswright.wd1", "tenant": "curtisswright", "site": "CW_External_Career_Site"},
-    {"name": "Tenstorrent", "ats": "greenhouse", "slug": "tenstorrent"},
-    {"name": "Astera Labs", "ats": "greenhouse", "slug": "asteralabs"},
-    {"name": "SiTime", "ats": "greenhouse", "slug": "sitimecorporation"},
-    {"name": "Aviya Aerospace", "ats": "lever", "slug": "aviyatech"},
-    {"name": "Qualcomm", "ats": "eightfold", "host": "careers.qualcomm.com", "domain": "qualcomm.com"},
-    {"name": "Infineon", "ats": "eightfold", "host": "jobs.infineon.com", "domain": "infineon.com"},
-    {"name": "Ericsson", "ats": "eightfold", "host": "jobs.ericsson.com", "domain": "ericsson.com"},
-    {"name": "STMicroelectronics", "ats": "eightfold", "host": "stmicroelectronics.eightfold.ai", "domain": "stmicroelectronics.com", "api": "v2"},
-    {"name": "Texas Instruments", "ats": "oracle", "host": "edbz.fa.us2.oraclecloud.com", "site": "CX"},
-    {"name": "Nokia", "ats": "oracle", "host": "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com", "site": "CX_1"},
-    {"name": "Honeywell", "ats": "oracle", "host": "ibqbjb.fa.ocs.oraclecloud.com", "site": "Honeywell"},
-    {"name": "MDA Space", "ats": "ukg", "host": "recruiting.ultipro.ca", "tenant": "MAC5000MCDW",
-     "boards": ["664818ff-3594-4bec-9f30-3394e59e19f3", "7667adcc-47ae-477a-9183-0d8ef8bc0748"]},
-    {"name": "Ranovus", "ats": "bamboohr", "slug": "ranovus"},
-    {"name": "Skyworks", "ats": "successfactors", "host": "careers.skyworksinc.com"}
+  "defaults": {
+    "title_keywords": ["intern", "internship", "co-op", "coop", "student"],
+    "location_keywords": [
+      "toronto", "north york", "etobicoke", "scarborough, on", "mississauga", "brampton",
+      "caledon", "markham", "vaughan", "concord, on", "richmond hill", "thornhill",
+      "newmarket, on", "aurora, on", "stouffville", "pickering, on", "ajax, on",
+      "whitby, on", "oshawa", "oakville", "burlington, on", "milton, on",
+      "ottawa", "kanata", "nepean", "barrhaven", "stittsville", "orléans, on", "orleans, on"
+    ],
+    "duration_patterns": [
+      "(?<!within )(?<!last )(?<!past )(?<!next )\\b(?:12|16|twelve|sixteen)[\\s-]*months?\\b"
+    ],
+    "other_duration_patterns": [
+      "(?<!within )(?<!last )(?<!past )(?<!next )\\b(?:\\d{1,2}|two|three|four|six|eight)[\\s-]*months?\\b(?!\\s+of\\b)"
+    ],
+    "search_terms": ["intern", "co-op", "student"]
+  },
+  "feeds": [
+    {
+      "name": "chips",
+      "webhook_env": "DISCORD_WEBHOOK_URL",
+      "companies": [
+        {"name": "AMD", "ats": "jibe", "host": "careers.amd.com"},
+        {"name": "Intel", "ats": "workday", "host": "intel.wd1", "tenant": "intel", "site": "External"},
+        {"name": "NXP", "ats": "workday", "host": "nxp.wd3", "tenant": "nxp", "site": "careers"},
+        {"name": "Analog Devices", "ats": "workday", "host": "analogdevices.wd1", "tenant": "analogdevices", "site": "External"},
+        {"name": "Microchip", "ats": "workday", "host": "microchiphr.wd5", "tenant": "microchiphr", "site": "External"},
+        {"name": "Semtech", "ats": "workday", "host": "semtech.wd1", "tenant": "semtech", "site": "SemtechCareers"},
+        {"name": "Ciena", "ats": "workday", "host": "ciena.wd5", "tenant": "ciena", "site": "Careers"},
+        {"name": "Cisco", "ats": "workday", "host": "cisco.wd5", "tenant": "cisco", "site": "Cisco_Careers"},
+        {"name": "Broadcom", "ats": "workday", "host": "broadcom.wd1", "tenant": "broadcom", "site": "External_Career"},
+        {"name": "Lumentum", "ats": "workday", "host": "lumentum.wd5", "tenant": "lumentum", "site": "LITE"},
+        {"name": "Cadence", "ats": "workday", "host": "cadence.wd1", "tenant": "cadence", "site": "External_Careers"},
+        {"name": "Curtiss-Wright", "ats": "workday", "host": "curtisswright.wd1", "tenant": "curtisswright", "site": "CW_External_Career_Site"},
+        {"name": "Tenstorrent", "ats": "greenhouse", "slug": "tenstorrent"},
+        {"name": "Astera Labs", "ats": "greenhouse", "slug": "asteralabs"},
+        {"name": "SiTime", "ats": "greenhouse", "slug": "sitimecorporation"},
+        {"name": "Aviya Aerospace", "ats": "lever", "slug": "aviyatech"},
+        {"name": "Qualcomm", "ats": "eightfold", "host": "careers.qualcomm.com", "domain": "qualcomm.com"},
+        {"name": "Infineon", "ats": "eightfold", "host": "jobs.infineon.com", "domain": "infineon.com"},
+        {"name": "Ericsson", "ats": "eightfold", "host": "jobs.ericsson.com", "domain": "ericsson.com"},
+        {"name": "STMicroelectronics", "ats": "eightfold", "host": "stmicroelectronics.eightfold.ai", "domain": "stmicroelectronics.com", "api": "v2"},
+        {"name": "Texas Instruments", "ats": "oracle", "host": "edbz.fa.us2.oraclecloud.com", "site": "CX"},
+        {"name": "Nokia", "ats": "oracle", "host": "fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com", "site": "CX_1"},
+        {"name": "Honeywell", "ats": "oracle", "host": "ibqbjb.fa.ocs.oraclecloud.com", "site": "Honeywell"},
+        {"name": "MDA Space", "ats": "ukg", "host": "recruiting.ultipro.ca", "tenant": "MAC5000MCDW",
+         "boards": ["664818ff-3594-4bec-9f30-3394e59e19f3", "7667adcc-47ae-477a-9183-0d8ef8bc0748"]},
+        {"name": "Ranovus", "ats": "bamboohr", "slug": "ranovus"},
+        {"name": "Skyworks", "ats": "successfactors", "host": "careers.skyworksinc.com"}
+      ]
+    },
+    {
+      "name": "materials",
+      "webhook_env": "DISCORD_WEBHOOK_URL_MATERIALS",
+      "field_keywords": [
+        "nuclear", "material", "metallurgical", "metallurgy", "polymer", "ceramic", "composite", "corrosion",
+        "project management", "project manager", "project coordinator", "project controls",
+        "project engineering", "program management",
+        "safety", "health and safety", "EHS", "HSE",
+        "medical", "biomedical", "medical device"
+      ],
+      "companies": [
+        {"name": "Ontario Power Generation", "field_filter": false, "ats": "successfactors", "host": "jobs.opg.com"},
+        {"name": "Bruce Power", "field_filter": false, "ats": "workday", "host": "brucepower.wd3", "tenant": "brucepower", "site": "BrucePower"},
+        {"name": "Kinectrics", "field_filter": false, "ats": "successfactors", "host": "careers.kinectrics.com"},
+        {"name": "BWXT", "field_filter": false, "ats": "successfactors", "host": "careers.bwxt.com"},
+        {"name": "Westinghouse", "field_filter": false, "ats": "successfactors", "host": "careers.westinghousenuclear.com"},
+        {"name": "Hydro One", "ats": "successfactors", "host": "jobs.hydroone.com"},
+        {"name": "Metrolinx", "ats": "oracle", "host": "ehtc.fa.ca2.oraclecloud.com", "site": "CX_1"},
+        {"name": "Enbridge", "ats": "workday", "host": "enbridge.wd3", "tenant": "enbridge", "site": "enbridge_careers"},
+        {"name": "Hatch", "ats": "successfactors", "host": "jobs.hatch.com"},
+        {"name": "Celestica", "ats": "successfactors", "host": "careers.celestica.com"},
+        {"name": "Magna", "ats": "workday", "host": "magna.wd3", "tenant": "magna", "site": "Magna"},
+        {"name": "General Motors", "ats": "workday", "host": "generalmotors.wd5", "tenant": "generalmotors", "site": "Careers_GM"},
+        {"name": "RTX (Pratt & Whitney, Collins)", "ats": "workday", "host": "globalhr.wd5", "tenant": "globalhr", "site": "REC_RTX_Ext_Gateway"},
+        {"name": "Bombardier", "ats": "successfactors", "host": "jobs.bombardier.com"},
+        {"name": "Honeywell", "ats": "oracle", "host": "ibqbjb.fa.ocs.oraclecloud.com", "site": "Honeywell"},
+        {"name": "MDA Space", "ats": "ukg", "host": "recruiting.ultipro.ca", "tenant": "MAC5000MCDW",
+         "boards": ["664818ff-3594-4bec-9f30-3394e59e19f3", "7667adcc-47ae-477a-9183-0d8ef8bc0748"]},
+        {"name": "Medtronic", "field_filter": false, "ats": "workday", "host": "medtronic.wd1", "tenant": "medtronic", "site": "MedtronicCareers"},
+        {"name": "Stryker", "field_filter": false, "ats": "workday", "host": "stryker.wd1", "tenant": "stryker", "site": "StrykerCareers"},
+        {"name": "Baxter", "field_filter": false, "ats": "workday", "host": "baxter.wd1", "tenant": "baxter", "site": "baxter"},
+        {"name": "Abbott", "field_filter": false, "ats": "workday", "host": "abbott.wd5", "tenant": "abbott", "site": "abbottcareers"},
+        {"name": "GE HealthCare", "field_filter": false, "ats": "workday", "host": "gehc.wd5", "tenant": "gehc", "site": "GEHC_ExternalSite"},
+        {"name": "Thermo Fisher", "field_filter": false, "ats": "workday", "host": "thermofisher.wd5", "tenant": "thermofisher", "site": "ThermoFisherCareers"},
+        {"name": "Sanofi", "field_filter": false, "ats": "workday", "host": "sanofi.wd3", "tenant": "sanofi", "site": "SanofiCareers"}
+      ]
+    }
   ]
 }

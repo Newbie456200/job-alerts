@@ -59,14 +59,46 @@ def join(*parts, sep="; "):
     return sep.join(dict.fromkeys(p for p in parts if p))  # drop blanks and duplicates
 
 
+WORKDAY_CANADA = "a30a87ed25634629aa6c3958aa2b91ea"  # Workday's country ID for Canada, the same in every tenant
+
+
+def workday_location_facets(facets, location_words):
+    """Facets that narrow a Workday search to Canada or the target cities.
+
+    Returns {} when the board has no location facets to narrow by, and None when its
+    location facets show no jobs in the target area (so the search can be skipped).
+    """
+    location_groups = []
+    for f in facets:
+        for g in [v for v in f.get("values", []) if "facetParameter" in v] or [f]:  # some facets are nested
+            values = g.get("values", [])
+            if any(v.get("id") == WORKDAY_CANADA for v in values):
+                return {g["facetParameter"]: [WORKDAY_CANADA]}
+            if "location" in g.get("facetParameter", "").lower():
+                location_groups.append(g)
+    words = [*location_words, "canada"]
+    for g in location_groups:
+        ids = [v["id"] for v in g["values"] if any(w in v.get("descriptor", "").lower() for w in words)]
+        if ids:
+            return {g["facetParameter"]: ids}
+    return None if location_groups else {}
+
+
 def workday(c, terms, keep):
     base = f"https://{c['host']}.myworkdayjobs.com"
     api = f"{base}/wday/cxs/{c['tenant']}/{c['site']}"
     done = set()
     for term in terms:
-        offset, total = 0, None
+        offset, total, facets = 0, None, None
         while total is None or offset < min(total, MAX_RESULTS):
-            data = post_json(f"{api}/jobs", {"appliedFacets": {}, "limit": 20, "offset": offset, "searchText": term})
+            data = post_json(f"{api}/jobs", {"appliedFacets": facets or {}, "limit": 20, "offset": offset, "searchText": term})
+            if facets is None:
+                # Big boards return thousands of matches worldwide; narrow to Canada when the board allows it.
+                facets = workday_location_facets(data.get("facets", []), c.get("location_keywords", []))
+                if facets is None:
+                    break  # nothing in the target area for this term
+                if facets:
+                    continue  # rerun the first page with the location facets applied
             if total is None:
                 total = data["total"]  # only reported on the first page
             postings = data["jobPostings"]

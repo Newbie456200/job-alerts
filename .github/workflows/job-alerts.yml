@@ -29,6 +29,7 @@ jobs:
       - run: python job_alerts.py
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL_MATERIALS: ${{ secrets.DISCORD_WEBHOOK_URL_MATERIALS }}
 
       - name: Commit seen.db
         if: always()
