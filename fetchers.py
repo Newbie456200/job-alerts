@@ -381,6 +381,9 @@ def simplify(c, terms, keep):
         company = x.get("company_name", "")
         if not x.get("active") or not x.get("is_visible", True) or company_key(company) in covered:
             continue
+        degrees = x.get("degrees") or []
+        if c.get("undergrad_only") and degrees and not {"Bachelor's", "Associate's"} & set(degrees):
+            continue  # graduate-only posting
         job_id = str(x["id"])
         if keep(job_id, x["title"]):
             yield Job(company, job_id, x["title"], join(*x.get("locations", [])), x["url"],

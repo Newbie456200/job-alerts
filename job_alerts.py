@@ -26,6 +26,8 @@ from fetchers import DESCRIBERS, FETCHERS
 ROOT = Path(__file__).parent
 CONFIG_PATH = ROOT / "config.json"
 DB_PATH = ROOT / "seen.db"
+MS_SOFTWARE = re.compile(r"\bMS[\s-]+(?:Office|Excel|Word|PowerPoint|Outlook|Teams|Project|Access|Visio|SQL)\b",
+                         re.IGNORECASE)
 
 
 def open_db(path, legacy_feed, read_only=False):
@@ -96,10 +98,24 @@ def run_feed(feed, db, args):
     duration_re = re.compile("|".join(feed["duration_patterns"]), re.IGNORECASE)
     other_duration_re = re.compile("|".join(feed["other_duration_patterns"]), re.IGNORECASE)
 
+    grad_re = word_pattern(feed["graduate_keywords"])
+    undergrad_re = word_pattern(feed["undergrad_keywords"])
+
     def wanted_term(job):
         # Keep 12/16-month postings and postings that don't state a length; drop ones that only state other lengths.
         text = job.title + "\n" + plain_text(job.description)
         return bool(duration_re.search(text)) or not other_duration_re.search(text)
+
+    def undergrad_ok(job):
+        # Drop postings aimed at Master's/PhD students: the title decides if it names a degree,
+        # otherwise the description does. "BS/MS" style postings stay.
+        if not feed.get("undergrad_only"):
+            return True
+        for text in (job.title, plain_text(job.description)):
+            text = MS_SOFTWARE.sub(" ", text)  # "MS Office" is not a Master's degree
+            if grad_re.search(text):
+                return bool(undergrad_re.search(text))
+        return True
 
     webhook = os.environ.get(feed["webhook_env"])
     if not webhook and not (args.dry_run or args.seed):
@@ -123,14 +139,14 @@ def run_feed(feed, db, args):
                     and (not check_field or bool(field_re.search(title))))
 
         try:
-            fetch_cfg = {**company, "location_keywords": location_words,
+            fetch_cfg = {**company, "location_keywords": location_words, "undergrad_only": feed.get("undergrad_only"),
                          "feed_companies": [c["name"] for c in feed["companies"]]}
             jobs = list(FETCHERS[company["ats"]](fetch_cfg, feed["search_terms"], keep))
             located = [j for j in jobs if any(w in j.location.lower() for w in location_words)]
             describe = DESCRIBERS.get(company["ats"])
             located = [j._replace(description=describe(company, j)) if j.description is None and describe else j
                        for j in located]
-            matches = [j for j in located if wanted_term(j)]
+            matches = [j for j in located if wanted_term(j) and undergrad_ok(j)]
             print(f"[{name}] {cname}: {len(jobs)} new title matches, {len(located)} in target locations, "
                   f"{len(matches)} after the 12-16 month filter")
             if args.dry_run:

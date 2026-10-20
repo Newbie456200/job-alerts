@@ -14,7 +14,10 @@
     "other_duration_patterns": [
       "(?<!within )(?<!last )(?<!past )(?<!next )\\b(?:\\d{1,2}|two|three|four|six|eight)[\\s-]*months?\\b(?!\\s+of\\b)"
     ],
-    "search_terms": ["intern", "co-op", "student"]
+    "search_terms": ["intern", "co-op", "student"],
+    "undergrad_only": true,
+    "graduate_keywords": ["ms", "m.s", "master", "master's", "masters", "msc", "m.sc", "meng", "m.eng", "phd", "ph.d", "doctoral", "doctorate", "postdoc", "postdoctoral", "graduate student"],
+    "undergrad_keywords": ["bachelor", "bachelor's", "bachelors", "bs", "bsc", "b.sc", "basc", "beng", "b.eng", "undergrad", "undergraduate"]
   },
   "feeds": [
     {
