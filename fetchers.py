@@ -329,8 +329,69 @@ def jibe(c, terms, keep):
                           f"{base}/careers-home/jobs/{d['slug']}", posted[:10] if posted else None, description)
 
 
+def ashby(c, terms, keep):
+    for j in get_json(f"https://api.ashbyhq.com/posting-api/job-board/{c['slug']}")["jobs"]:
+        if keep(j["id"], j["title"]):
+            location = join(j.get("location"), *(s.get("location") for s in j.get("secondaryLocations") or []),
+                            "Remote" if j.get("isRemote") else None)
+            posted = j.get("publishedAt")
+            yield Job(c["name"], j["id"], j["title"], location, j["jobUrl"],
+                      posted[:10] if posted else None, j.get("descriptionPlain", ""))
+
+
+def ibm(c, terms, keep):
+    # careers.ibm.com searches through IBM's general site-search API.
+    done = set()
+    for term in terms:
+        start, total = 0, None
+        while total is None or start < min(total, MAX_RESULTS):
+            hits = post_json("https://www-api.ibm.com/search/api/v2", {
+                "appId": "careers", "scopes": ["careers2"], "size": 100, "from": start,
+                "query": {"bool": {"must": [{"simple_query_string": {
+                    "query": f'"{term}"', "fields": ["title^3", "description^2"]}}]}},
+                "_source": ["title", "url", "description", "field_keyword_17", "field_keyword_19"]})["hits"]
+            total, rows = hits["total"]["value"], hits["hits"]
+            if not rows:
+                break
+            start += len(rows)
+            for h in rows:
+                s = h["_source"]
+                m = re.search(r"jobId=(\d+)", s.get("url", ""))
+                job_id = m.group(1) if m else h["_id"]
+                if job_id in done:
+                    continue
+                done.add(job_id)
+                if not keep(job_id, s.get("title", "")):
+                    continue
+                place = s.get("field_keyword_19") or ""  # e.g. "Markham, CA"; the suffix is a country code
+                location = join(place, "Canada" if place.endswith(", CA") else None, s.get("field_keyword_17"))
+                yield Job(c["name"], job_id, s["title"], location, s["url"], None, s.get("description", ""))
+
+
+def company_key(name):
+    name = re.sub(r"\b(inc|corp|corporation|ltd|limited|llc|co|technologies|technology)\b\.?", "", name.lower())
+    return re.sub(r"[^a-z0-9]", "", name)
+
+
+def simplify(c, terms, keep):
+    # A community-maintained list of internships at hundreds of companies. Companies the feed
+    # already checks directly are skipped so their postings aren't sent twice.
+    covered = {company_key(n) for n in c.get("feed_companies", [])}
+    for x in get_json(c["url"]):
+        company = x.get("company_name", "")
+        if not x.get("active") or not x.get("is_visible", True) or company_key(company) in covered:
+            continue
+        job_id = str(x["id"])
+        if keep(job_id, x["title"]):
+            yield Job(company, job_id, x["title"], join(*x.get("locations", [])), x["url"],
+                      from_epoch(x.get("date_posted")), "")
+
+
 FETCHERS = {
     "workday": workday,
+    "ashby": ashby,
+    "ibm": ibm,
+    "simplify": simplify,
     "greenhouse": greenhouse,
     "lever": lever,
     "eightfold": eightfold,

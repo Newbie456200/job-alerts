@@ -2,7 +2,7 @@ name: job-alerts
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "17,47 * * * *"  # every 30 min, off the busy :00/:30 slots GitHub tends to delay
   workflow_dispatch:
 
 permissions:

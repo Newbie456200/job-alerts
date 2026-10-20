@@ -51,10 +51,12 @@ def open_db(path, legacy_feed, read_only=False):
     return db
 
 
-def record(db, feed, jobs, matched_ids):
+def record(db, feed, source, jobs, matched_ids):
+    # Rows are keyed by the config entry (source), not the posting's company: one source such as
+    # the Simplify list covers many companies.
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     db.executemany("INSERT OR IGNORE INTO seen VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", [
-        (feed, j.company, j.job_id, j.title, j.location, j.url, j.posted_date, j.job_id in matched_ids, now)
+        (feed, source, j.job_id, j.title, j.location, j.url, j.posted_date, j.job_id in matched_ids, now)
         for j in jobs])
     db.commit()
 
@@ -111,15 +113,18 @@ def run_feed(feed, db, args):
     failures = 0
     for company in companies:
         cname = company["name"]
-        # Companies whose whole business is in the feed's field can opt out of the field keyword check.
+        # Companies whose whole business is in the feed's field can opt out of the field keyword check,
+        # and internship-only sources can opt out of the intern/co-op title check.
         check_field = field_re is not None and company.get("field_filter", True)
+        check_title = company.get("title_filter", True)
 
         def keep(job_id, title):
-            return ((cname, job_id) not in seen and bool(title_re.search(title))
+            return ((cname, job_id) not in seen and (not check_title or bool(title_re.search(title)))
                     and (not check_field or bool(field_re.search(title))))
 
         try:
-            fetch_cfg = {**company, "location_keywords": location_words}
+            fetch_cfg = {**company, "location_keywords": location_words,
+                         "feed_companies": [c["name"] for c in feed["companies"]]}
             jobs = list(FETCHERS[company["ats"]](fetch_cfg, feed["search_terms"], keep))
             located = [j for j in jobs if any(w in j.location.lower() for w in location_words)]
             describe = DESCRIBERS.get(company["ats"])
@@ -134,7 +139,7 @@ def run_feed(feed, db, args):
                 continue
             if not args.seed:
                 post_to_discord(webhook, matches)
-            record(db, name, jobs, {j.job_id for j in matches})
+            record(db, name, cname, jobs, {j.job_id for j in matches})
             seen.update((cname, j.job_id) for j in jobs)
         except Exception as e:
             failures += 1

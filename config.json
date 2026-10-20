@@ -3,7 +3,7 @@
     "title_keywords": ["intern", "internship", "co-op", "coop", "student"],
     "location_keywords": [
       "toronto", "north york", "etobicoke", "scarborough, on", "mississauga", "brampton",
-      "caledon", "markham", "vaughan", "concord, on", "richmond hill", "thornhill",
+      "caledon, on", "markham", "vaughan", "concord, on", "richmond hill", "thornhill",
       "newmarket, on", "aurora, on", "stouffville", "pickering, on", "ajax, on",
       "whitby, on", "oshawa", "oakville", "burlington, on", "milton, on",
       "ottawa", "kanata", "nepean", "barrhaven", "stittsville", "orléans, on", "orleans, on"
@@ -20,6 +20,14 @@
     {
       "name": "chips",
       "webhook_env": "DISCORD_WEBHOOK_URL",
+      "field_keywords": [
+        "asic", "fpga", "rtl", "soc", "vlsi", "silicon", "ic", "integrated circuit", "rfic", "chip", "semiconductor",
+        "analog", "mixed signal", "mixed-signal", "digital design", "digital ic", "hardware design", "logic design",
+        "design verification", "functional verification", "formal verification", "validation", "emulation", "physical design", "layout", "pcb",
+        "dft", "design-for-test", "design for test", "design automation", "design methodology", "cad", "eda",
+        "ip", "msip", "dsp", "gpu", "rf", "signal integrity", "packaging", "characterization", "post-silicon",
+        "pre-silicon", "firmware", "embedded", "hardware"
+      ],
       "companies": [
         {"name": "AMD", "ats": "jibe", "host": "careers.amd.com"},
         {"name": "Intel", "ats": "workday", "host": "intel.wd1", "tenant": "intel", "site": "External"},
@@ -47,7 +55,19 @@
         {"name": "MDA Space", "ats": "ukg", "host": "recruiting.ultipro.ca", "tenant": "MAC5000MCDW",
          "boards": ["664818ff-3594-4bec-9f30-3394e59e19f3", "7667adcc-47ae-477a-9183-0d8ef8bc0748"]},
         {"name": "Ranovus", "ats": "bamboohr", "slug": "ranovus"},
-        {"name": "Skyworks", "ats": "successfactors", "host": "careers.skyworksinc.com"}
+        {"name": "Skyworks", "ats": "successfactors", "host": "careers.skyworksinc.com"},
+        {"name": "NVIDIA", "ats": "workday", "host": "nvidia.wd5", "tenant": "nvidia", "site": "NVIDIAExternalCareerSite"},
+        {"name": "Altera", "ats": "workday", "host": "altera.wd1", "tenant": "altera", "site": "Altera"},
+        {"name": "Marvell", "ats": "workday", "host": "marvell.wd1", "tenant": "marvell", "site": "MarvellCareers"},
+        {"name": "Hitachi Energy", "ats": "workday", "host": "hitachi.wd1", "tenant": "hitachi", "site": "hitachi"},
+        {"name": "Thales", "ats": "workday", "host": "thales.wd3", "tenant": "thales", "site": "Careers"},
+        {"name": "BlackBerry", "ats": "workday", "host": "bb.wd3", "tenant": "bb", "site": "BlackBerry"},
+        {"name": "Astera Labs (early careers)", "ats": "greenhouse", "slug": "asteraearlycareer2027"},
+        {"name": "Lightmatter", "ats": "greenhouse", "slug": "lightmatter"},
+        {"name": "Cerebras", "ats": "ashby", "slug": "cerebras"},
+        {"name": "IBM", "ats": "ibm"},
+        {"name": "Simplify internship list", "ats": "simplify", "title_filter": false,
+         "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json"}
       ]
     },
     {
