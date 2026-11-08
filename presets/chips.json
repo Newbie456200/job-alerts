@@ -276,6 +276,27 @@
       "ats": "ibm"
     },
     {
+      "name": "Credo",
+      "ats": "hibob",
+      "company": "credo"
+    },
+    {
+      "name": "MACOM",
+      "ats": "cornerstone",
+      "host": "macomtech.csod.com",
+      "site": 4
+    },
+    {
+      "name": "Kandou AI",
+      "ats": "ashby",
+      "slug": "kandou-ai"
+    },
+    {
+      "name": "Eliyan",
+      "ats": "lever",
+      "slug": "eliyan"
+    },
+    {
       "name": "Simplify internship list",
       "ats": "simplify",
       "title_filter": false,

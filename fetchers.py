@@ -368,6 +368,55 @@ def ibm(c, terms, keep):
                 yield Job(c["name"], job_id, s["title"], location, s["url"], None, s.get("description", ""))
 
 
+def hibob(c, terms, keep):
+    data = get_json(f"https://{c['company']}.careers.hibob.com/api/job-ad", headers={"companyidentifier": c["company"]})
+    for j in data["jobAdDetails"]:
+        if keep(j["id"], j["title"]):
+            places = [", ".join(str(v) for v in p.values() if isinstance(v, str)) if isinstance(p, dict) else str(p)
+                      for p in j.get("postingLocations") or []]
+            posted = j.get("publishedAt")
+            yield Job(c["name"], j["id"], j["title"], join(j.get("site"), j.get("country"), *places),
+                      f"https://{c['company']}.careers.hibob.com/jobs/{j['id']}", posted[:10] if posted else None,
+                      join(j.get("description"), j.get("responsibilities"), j.get("requirements"), sep="\n"))
+
+
+def cornerstone(c, terms, keep):
+    # Cornerstone (csod.com) career sites hand the browser a short-lived token; the search API needs it.
+    host, site = c["host"], c.get("site", 1)
+    tenant = host.split(".")[0]
+    page = request("GET", f"https://{host}/ux/ats/careersite/{site}/home?c={tenant}").text
+    token = re.search(r'"token"\s*:\s*"([^"]+)"', page).group(1)
+    m = re.search(r"https://[a-z0-9-]+\.api\.csod\.com", page)
+    api = m.group(0) if m else "https://us.api.csod.com"
+    done = set()
+    for term in terms:
+        number, fetched, total = 1, 0, None
+        while total is None or fetched < min(total, MAX_RESULTS):
+            data = request("POST", f"{api}/rec-job-search/external/jobs", headers={"Authorization": f"Bearer {token}"}, json={
+                "careerSiteId": site, "careerSitePageId": site, "pageNumber": number, "pageSize": 50, "cultureId": 1,
+                "cultureName": "en-US", "searchText": term, "states": [], "countryCodes": [], "cities": [], "placeID": "",
+                "radius": None, "postingsWithinDays": None, "customFieldCheckboxKeys": [], "customFieldDropdowns": [],
+                "customFieldRadios": []}).json()["data"]
+            total, reqs = data["totalCount"], data["requisitions"]
+            if not reqs:
+                break
+            number, fetched = number + 1, fetched + len(reqs)
+            for q in reqs:
+                job_id = str(q["requisitionId"])
+                if job_id in done:
+                    continue
+                done.add(job_id)
+                if not keep(job_id, q["displayJobTitle"]):
+                    continue
+                location = join(*(join(l.get("city"), l.get("state"), COUNTRY_NAMES.get(l.get("country"), l.get("country")), sep=", ")
+                                  for l in q.get("locations") or []))
+                posted = q.get("postingEffectiveDate")  # e.g. "11/6/2026"
+                posted = datetime.strptime(posted, "%m/%d/%Y").date().isoformat() if posted else None
+                yield Job(c["name"], job_id, q["displayJobTitle"], location,
+                          f"https://{host}/ux/ats/careersite/{site}/home/requisition/{job_id}?c={tenant}", posted,
+                          q.get("externalDescription", ""))
+
+
 def company_key(name):
     name = re.sub(r"\b(inc|corp|corporation|ltd|limited|llc|co|technologies|technology)\b\.?", "", name.lower())
     return re.sub(r"[^a-z0-9]", "", name)
@@ -395,6 +444,8 @@ FETCHERS = {
     "ashby": ashby,
     "ibm": ibm,
     "simplify": simplify,
+    "hibob": hibob,
+    "cornerstone": cornerstone,
     "greenhouse": greenhouse,
     "lever": lever,
     "eightfold": eightfold,

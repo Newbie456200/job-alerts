@@ -131,8 +131,8 @@ Open any job on the company's careers site and look at the URL to find which sys
 | `acme.bamboohr.com/careers/...` | `{"name": "Acme", "ats": "bamboohr", "slug": "acme"}` |
 
 For Workday, the `tenant` is usually the first part of the host, and the `site` is the path
-segment after the host (ignore `en-US/`). Eightfold, UKG, IBM and AMD's career site are also
-supported; see existing entries for their fields.
+segment after the host (ignore `en-US/`). Eightfold, UKG, HiBob, Cornerstone (csod.com), IBM
+and AMD's career site are also supported; see existing entries in `presets/` for their fields.
 
 Not every company can be added. Some careers sites block automated requests or have no
 usable job API.
