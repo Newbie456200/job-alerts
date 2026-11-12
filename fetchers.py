@@ -8,6 +8,7 @@ Job.description is filled in when the ATS returns it cheaply. For boards where i
 costs an extra request per job, it is left as None and DESCRIBERS fetches it later,
 only for jobs that have already passed the title and location filters.
 """
+import html
 import json
 import re
 import time
@@ -417,6 +418,40 @@ def cornerstone(c, terms, keep):
                           q.get("externalDescription", ""))
 
 
+def radancy(c, terms, keep):
+    # Radancy (TalentBrew) career sites return search results as an HTML fragment inside JSON.
+    base = f"https://{c['host']}"
+    done = set()
+    for term in terms:
+        page, pages = 1, 1
+        while page <= min(pages, 50):
+            text = request("GET", f"{base}/search-jobs/results", headers={"X-Requested-With": "XMLHttpRequest"}, params={
+                "ActiveFacetID": 0, "CurrentPage": page, "RecordsPerPage": 15, "Keywords": term, "SortCriteria": 0,
+                "SortDirection": 0, "SearchType": 5, "SearchResultsModuleName": "Search Results",
+                "SearchFiltersModuleName": "Search Filters"}).json()["results"]
+            m = re.search(r'data-total-pages="(\d+)"', text)
+            pages, page = int(m.group(1)) if m else 1, page + 1
+            for item in re.findall(r'<a class="sr-job-link"(.*?)</a>', text, re.S):
+                a = re.search(r'href="([^"]+)" data-job-id="(\d+)"', item)
+                if not a or a.group(2) in done:
+                    continue
+                path, job_id = a.groups()
+                done.add(job_id)
+                title = html.unescape(re.sub(r"<[^>]+>", "", re.search(r"<h2>(.*?)</h2>", item, re.S).group(1))).strip()
+                if not keep(job_id, title):
+                    continue
+                loc = re.search(r'class="job-location">(.*?)</span>', item, re.S)
+                location = html.unescape(re.sub(r"<[^>]+>", "", loc.group(1))).strip() if loc else ""
+                # Search results carry no description; radancy_description fetches it when needed.
+                yield Job(c["name"], job_id, title, location, base + path, None)
+
+
+def radancy_description(c, job):
+    page = request("GET", job.url).text
+    m = re.search(r'<div class="ats-description[^"]*"[^>]*>(.*?)</section>', page, re.S)
+    return m.group(1) if m else ""
+
+
 def company_key(name):
     name = re.sub(r"\b(inc|corp|corporation|ltd|limited|llc|co|technologies|technology)\b\.?", "", name.lower())
     return re.sub(r"[^a-z0-9]", "", name)
@@ -445,6 +480,7 @@ FETCHERS = {
     "ibm": ibm,
     "simplify": simplify,
     "hibob": hibob,
+    "radancy": radancy,
     "cornerstone": cornerstone,
     "greenhouse": greenhouse,
     "lever": lever,
@@ -460,4 +496,5 @@ DESCRIBERS = {
     "eightfold": eightfold_description,
     "ukg": ukg_description,
     "bamboohr": bamboohr_description,
+    "radancy": radancy_description,
 }

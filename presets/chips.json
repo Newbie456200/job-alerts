@@ -46,7 +46,10 @@
     "pre-silicon",
     "firmware",
     "embedded",
-    "hardware"
+    "hardware",
+    "memory design",
+    "standard cell",
+    "circuit"
   ],
   "companies": [
     {
@@ -295,6 +298,11 @@
       "name": "Eliyan",
       "ats": "lever",
       "slug": "eliyan"
+    },
+    {
+      "name": "Synopsys",
+      "ats": "radancy",
+      "host": "careers.synopsys.com"
     },
     {
       "name": "Simplify internship list",
