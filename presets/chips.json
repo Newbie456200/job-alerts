@@ -1,5 +1,47 @@
 {
   "description": "Chip design, FPGA, analog/mixed-signal, layout, verification, firmware and related hardware roles at semiconductor and hardware employers, plus the Simplify internship list for other companies.",
+  "max_age_days": 14,
+  "us_field_keywords": [
+    "asic",
+    "fpga",
+    "rtl",
+    "soc",
+    "vlsi",
+    "silicon",
+    "digital design",
+    "digital ic",
+    "hardware design",
+    "hardware engineer",
+    "hardware engineering",
+    "hardware development",
+    "hardware dev",
+    "logic design",
+    "design verification",
+    "functional verification",
+    "formal verification",
+    "physical design",
+    "microarchitecture",
+    "computer architecture",
+    "chip design",
+    "ic design",
+    "pre-silicon",
+    "post-silicon",
+    "emulation",
+    "dft",
+    "design-for-test",
+    "design for test",
+    "circuit design",
+    "analog",
+    "mixed signal",
+    "mixed-signal",
+    "rfic",
+    "memory design",
+    "standard cell",
+    "gpu",
+    "cpu",
+    "verilog",
+    "systemverilog"
+  ],
   "field_keywords": [
     "asic",
     "fpga",
@@ -55,14 +97,16 @@
     {
       "name": "AMD",
       "ats": "jibe",
-      "host": "careers.amd.com"
+      "host": "careers.amd.com",
+      "allow_us": true
     },
     {
       "name": "Intel",
       "ats": "workday",
       "host": "intel.wd1",
       "tenant": "intel",
-      "site": "External"
+      "site": "External",
+      "allow_us": true
     },
     {
       "name": "NXP",
@@ -158,7 +202,8 @@
       "name": "Qualcomm",
       "ats": "eightfold",
       "host": "careers.qualcomm.com",
-      "domain": "qualcomm.com"
+      "domain": "qualcomm.com",
+      "allow_us": true
     },
     {
       "name": "Infineon",
@@ -183,7 +228,8 @@
       "name": "Texas Instruments",
       "ats": "oracle",
       "host": "edbz.fa.us2.oraclecloud.com",
-      "site": "CX"
+      "site": "CX",
+      "allow_us": true
     },
     {
       "name": "Nokia",
@@ -222,7 +268,8 @@
       "ats": "workday",
       "host": "nvidia.wd5",
       "tenant": "nvidia",
-      "site": "NVIDIAExternalCareerSite"
+      "site": "NVIDIAExternalCareerSite",
+      "allow_us": true
     },
     {
       "name": "Altera",
@@ -236,7 +283,8 @@
       "ats": "workday",
       "host": "marvell.wd1",
       "tenant": "marvell",
-      "site": "MarvellCareers"
+      "site": "MarvellCareers",
+      "allow_us": true
     },
     {
       "name": "Hitachi Energy",
@@ -305,10 +353,114 @@
       "host": "careers.synopsys.com"
     },
     {
+      "name": "Samsung",
+      "ats": "workday",
+      "host": "sec.wd3",
+      "tenant": "sec",
+      "site": "Samsung_Careers",
+      "allow_us": true
+    },
+    {
+      "name": "Arm",
+      "ats": "radancy",
+      "host": "careers.arm.com",
+      "allow_us": true
+    },
+    {
+      "name": "Amazon",
+      "ats": "amazon",
+      "allow_us": true,
+      "search_terms": [
+        "hardware intern",
+        "silicon intern",
+        "asic intern",
+        "fpga intern",
+        "annapurna intern",
+        "rtl intern",
+        "digital design intern"
+      ]
+    },
+    {
+      "name": "Jane Street",
+      "ats": "greenhouse",
+      "slug": "janestreet",
+      "allow_us": true
+    },
+    {
+      "name": "Jump Trading",
+      "ats": "greenhouse",
+      "slug": "jumptrading",
+      "allow_us": true
+    },
+    {
+      "name": "Optiver",
+      "ats": "greenhouse",
+      "slug": "optiverus",
+      "allow_us": true
+    },
+    {
+      "name": "IMC",
+      "ats": "greenhouse",
+      "slug": "imc",
+      "allow_us": true
+    },
+    {
+      "name": "DRW",
+      "ats": "greenhouse",
+      "slug": "drweng",
+      "allow_us": true
+    },
+    {
+      "name": "Tower Research",
+      "ats": "greenhouse",
+      "slug": "towerresearchcapital",
+      "allow_us": true
+    },
+    {
+      "name": "Akuna Capital",
+      "ats": "greenhouse",
+      "slug": "akunacapital",
+      "allow_us": true
+    },
+    {
+      "name": "Five Rings",
+      "ats": "greenhouse",
+      "slug": "fiveringsllc",
+      "allow_us": true
+    },
+    {
       "name": "Simplify internship list",
       "ats": "simplify",
       "title_filter": false,
-      "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json"
+      "url": "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json",
+      "allow_us_companies": [
+        "NVIDIA",
+        "AMD",
+        "Intel",
+        "Qualcomm",
+        "Marvell",
+        "Apple",
+        "Arm",
+        "Texas Instruments",
+        "Samsung",
+        "TSMC",
+        "Google",
+        "Amazon",
+        "Annapurna Labs",
+        "Meta",
+        "Jane Street",
+        "Hudson River Trading",
+        "Citadel",
+        "Citadel Securities",
+        "Jump Trading",
+        "Optiver",
+        "IMC",
+        "DRW",
+        "Tower Research",
+        "Akuna Capital",
+        "Five Rings",
+        "Two Sigma"
+      ]
     }
   ]
 }

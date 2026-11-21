@@ -17,12 +17,12 @@ import re
 import sqlite3
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import requests
 
-from fetchers import DESCRIBERS, FETCHERS
+from fetchers import DESCRIBERS, FETCHERS, company_key
 
 ROOT = Path(__file__).parent
 CONFIG_PATH = ROOT / "config.json"
@@ -32,6 +32,30 @@ PRESETS_DIR = ROOT / "presets"
 DB_PATH = Path(os.environ.get("SEEN_DB") or ROOT / "seen.db")
 MS_SOFTWARE = re.compile(r"\bMS[\s-]+(?:Office|Excel|Word|PowerPoint|Outlook|Teams|Project|Access|Visio|SQL)\b",
                          re.IGNORECASE)
+US_LOCATION_NAME = re.compile(
+    r"\b(?:united states|u\.s\.a?\.?|usa|alabama|alaska|arizona|arkansas|california|colorado|connecticut|"
+    r"delaware|district of columbia|florida|georgia|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|"
+    r"louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|"
+    r"nevada|new hampshire|new jersey|new mexico|new york|north carolina|north dakota|ohio|oklahoma|"
+    r"oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|"
+    r"virginia|washington|west virginia|wisconsin|wyoming|chicago)\b",
+    re.IGNORECASE,
+)
+# Exclude CA (ambiguous with Canada) and Canadian province codes; CA is checked separately below.
+US_STATE_CODE = re.compile(
+    r"(?:,\s*|\s-\s)(?:AL|AK|AZ|AR|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|"
+    r"NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b"
+)
+US_CA_CODE = re.compile(r"(?:,\s*|\s-\s)CA\b")
+
+
+def is_us_location(location, ca_words):
+    if US_LOCATION_NAME.search(location) or US_STATE_CODE.search(location):
+        return True
+    loc_lower = location.lower()
+    if US_CA_CODE.search(location) and "canada" not in loc_lower and not any(w in loc_lower for w in ca_words):
+        return True
+    return False
 
 
 def open_db(path, legacy_feed, read_only=False):
@@ -120,9 +144,12 @@ def run_feed(feed, db, args):
     name = feed["name"]
     title_re = word_pattern(feed["title_keywords"])
     field_re = word_pattern(feed["field_keywords"]) if feed.get("field_keywords") else None
+    us_field_re = word_pattern(feed["us_field_keywords"]) if feed.get("us_field_keywords") else field_re
     location_words = [w.lower() for w in feed["location_keywords"]]
     duration_re = re.compile("|".join(feed["duration_patterns"]), re.IGNORECASE)
     other_duration_re = re.compile("|".join(feed["other_duration_patterns"]), re.IGNORECASE)
+    max_age_days = feed.get("max_age_days")
+    today = datetime.now(timezone.utc).date()
 
     grad_re = word_pattern(feed["graduate_keywords"])
     undergrad_re = word_pattern(feed["undergrad_keywords"])
@@ -131,6 +158,15 @@ def run_feed(feed, db, args):
         # Keep 12/16-month postings and postings that don't state a length; drop ones that only state other lengths.
         text = job.title + "\n" + plain_text(job.description)
         return bool(duration_re.search(text)) or not other_duration_re.search(text)
+
+    def recent_enough(job):
+        if max_age_days is None or not job.posted_date:
+            return True
+        try:
+            posted = date.fromisoformat(job.posted_date[:10])
+        except ValueError:
+            return True
+        return (today - posted).days <= max_age_days
 
     def undergrad_ok(job):
         # Drop postings aimed at Master's/PhD students: the title decides if it names a degree,
@@ -159,22 +195,40 @@ def run_feed(feed, db, args):
         # and internship-only sources can opt out of the intern/co-op title check.
         check_field = field_re is not None and company.get("field_filter", True)
         check_title = company.get("title_filter", True)
+        allow_us_all = company.get("allow_us", False)
+        allow_us_keys = {company_key(n) for n in company.get("allow_us_companies", [])}
+        has_us = allow_us_all or bool(allow_us_keys)
 
         def keep(job_id, title):
-            return ((cname, job_id) not in seen and (not check_title or bool(title_re.search(title)))
-                    and (not check_field or bool(field_re.search(title))))
+            if (cname, job_id) in seen or (check_title and not title_re.search(title)):
+                return False
+            if not check_field:
+                return True
+            return bool(field_re.search(title)) or (has_us and us_field_re is not None and bool(us_field_re.search(title)))
+
+        def job_regions(job):
+            in_ca = any(w in job.location.lower() for w in location_words)
+            in_us = (allow_us_all or company_key(job.company) in allow_us_keys) and is_us_location(job.location, location_words)
+            return in_ca, in_us
+
+        def matches_filters(job):
+            in_ca, in_us = job_regions(job)
+            ca_ok = in_ca and (not check_field or bool(field_re.search(job.title))) and wanted_term(job)
+            us_ok = in_us and (not check_field or us_field_re is None or bool(us_field_re.search(job.title)))
+            return (ca_ok or us_ok) and undergrad_ok(job) and recent_enough(job)
 
         try:
             fetch_cfg = {**company, "location_keywords": location_words, "undergrad_only": feed.get("undergrad_only"),
                          "feed_companies": [c["name"] for c in feed["companies"]]}
-            jobs = list(FETCHERS[company["ats"]](fetch_cfg, feed["search_terms"], keep))
-            located = [j for j in jobs if any(w in j.location.lower() for w in location_words)]
+            terms = company.get("search_terms", feed["search_terms"])
+            jobs = list(FETCHERS[company["ats"]](fetch_cfg, terms, keep))
+            located = [j for j in jobs if any(job_regions(j))]
             describe = DESCRIBERS.get(company["ats"])
             located = [j._replace(description=describe(company, j)) if j.description is None and describe else j
                        for j in located]
-            matches = [j for j in located if wanted_term(j) and undergrad_ok(j)]
+            matches = [j for j in located if matches_filters(j)]
             print(f"[{name}] {cname}: {len(jobs)} new title matches, {len(located)} in target locations, "
-                  f"{len(matches)} after the 12-16 month filter")
+                  f"{len(matches)} after filters")
             if args.dry_run:
                 for j in located:
                     print(f"    {'+' if j in matches else '-'} {j.title} | {j.location} | {j.posted_date} | {j.url}")

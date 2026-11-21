@@ -61,23 +61,26 @@ def join(*parts, sep="; "):
 
 
 WORKDAY_CANADA = "a30a87ed25634629aa6c3958aa2b91ea"  # Workday's country ID for Canada, the same in every tenant
+WORKDAY_US = "bc33aa3152ec42d4995f4791a106ed09"  # Workday's country ID for the United States, the same in every tenant
 
 
-def workday_location_facets(facets, location_words):
-    """Facets that narrow a Workday search to Canada or the target cities.
+def workday_location_facets(facets, location_words, allow_us=False):
+    """Facets that narrow a Workday search to Canada (and the US when enabled) or target cities.
 
     Returns {} when the board has no location facets to narrow by, and None when its
     location facets show no jobs in the target area (so the search can be skipped).
     """
+    wanted_countries = {WORKDAY_CANADA, WORKDAY_US} if allow_us else {WORKDAY_CANADA}
     location_groups = []
     for f in facets:
         for g in [v for v in f.get("values", []) if "facetParameter" in v] or [f]:  # some facets are nested
             values = g.get("values", [])
-            if any(v.get("id") == WORKDAY_CANADA for v in values):
-                return {g["facetParameter"]: [WORKDAY_CANADA]}
+            country_ids = [v["id"] for v in values if v.get("id") in wanted_countries]
+            if country_ids:
+                return {g["facetParameter"]: country_ids}
             if "location" in g.get("facetParameter", "").lower():
                 location_groups.append(g)
-    words = [*location_words, "canada"]
+    words = [*location_words, "canada", *(["united states", "usa", "u.s."] if allow_us else [])]
     for g in location_groups:
         ids = [v["id"] for v in g["values"] if any(w in v.get("descriptor", "").lower() for w in words)]
         if ids:
@@ -94,8 +97,9 @@ def workday(c, terms, keep):
         while total is None or offset < min(total, MAX_RESULTS):
             data = post_json(f"{api}/jobs", {"appliedFacets": facets or {}, "limit": 20, "offset": offset, "searchText": term})
             if facets is None:
-                # Big boards return thousands of matches worldwide; narrow to Canada when the board allows it.
-                facets = workday_location_facets(data.get("facets", []), c.get("location_keywords", []))
+                # Big boards return thousands of matches worldwide; narrow to target countries when the board allows it.
+                facets = workday_location_facets(data.get("facets", []), c.get("location_keywords", []),
+                                                 allow_us=c.get("allow_us", False))
                 if facets is None:
                     break  # nothing in the target area for this term
                 if facets:
@@ -431,16 +435,18 @@ def radancy(c, terms, keep):
                 "SearchFiltersModuleName": "Search Filters"}).json()["results"]
             m = re.search(r'data-total-pages="(\d+)"', text)
             pages, page = int(m.group(1)) if m else 1, page + 1
-            for item in re.findall(r'<a class="sr-job-link"(.*?)</a>', text, re.S):
-                a = re.search(r'href="([^"]+)" data-job-id="(\d+)"', item)
+            for item in re.findall(r"<li[^>]*>(.*?)</li>", text, re.S):
+                a = re.search(r'<a[^>]*href="([^"]+)"[^>]*data-job-id="(\d+)"[^>]*>(.*?)</a>', item, re.S)
                 if not a or a.group(2) in done:
                     continue
-                path, job_id = a.groups()
+                path, job_id, anchor_html = a.groups()
                 done.add(job_id)
-                title = html.unescape(re.sub(r"<[^>]+>", "", re.search(r"<h2>(.*?)</h2>", item, re.S).group(1))).strip()
+                heading = re.search(r"<h2>(.*?)</h2>", anchor_html, re.S)
+                raw_title = heading.group(1) if heading else anchor_html
+                title = html.unescape(re.sub(r"<[^>]+>", "", raw_title)).strip()
                 if not keep(job_id, title):
                     continue
-                loc = re.search(r'class="job-location">(.*?)</span>', item, re.S)
+                loc = re.search(r'class="(?:job-)?location"[^>]*>(.*?)</span>', item, re.S)
                 location = html.unescape(re.sub(r"<[^>]+>", "", loc.group(1))).strip() if loc else ""
                 # Search results carry no description; radancy_description fetches it when needed.
                 yield Job(c["name"], job_id, title, location, base + path, None)
@@ -450,6 +456,39 @@ def radancy_description(c, job):
     page = request("GET", job.url).text
     m = re.search(r'<div class="ats-description[^"]*"[^>]*>(.*?)</section>', page, re.S)
     return m.group(1) if m else ""
+
+
+def amazon(c, terms, keep):
+    done = set()
+    for term in terms:
+        offset, total = 0, None
+        while total is None or offset < min(total, MAX_RESULTS):
+            data = get_json("https://www.amazon.jobs/en/search.json", params={
+                "base_query": term, "result_limit": 100, "offset": offset, "sort": "recent"})
+            total, jobs = data.get("hits", 0), data.get("jobs") or []
+            if not jobs:
+                break
+            offset += len(jobs)
+            for j in jobs:
+                job_id = str(j.get("id_icims") or j["id"])
+                if job_id in done:
+                    continue
+                done.add(job_id)
+                title = j.get("title", "")
+                if not keep(job_id, title):
+                    continue
+                location = join(j.get("normalized_location"), j.get("location"),
+                                COUNTRY_NAMES.get(j.get("country_code")))
+                posted = j.get("posted_date")
+                if posted:
+                    try:
+                        posted = datetime.strptime(" ".join(posted.split()), "%B %d, %Y").date().isoformat()
+                    except ValueError:
+                        posted = None
+                description = join(j.get("description"), j.get("basic_qualifications"),
+                                   j.get("preferred_qualifications"), sep="\n")
+                yield Job(c["name"], job_id, title, location, f"https://www.amazon.jobs{j['job_path']}",
+                          posted, description)
 
 
 def company_key(name):
@@ -490,6 +529,7 @@ FETCHERS = {
     "bamboohr": bamboohr,
     "successfactors": successfactors,
     "jibe": jibe,
+    "amazon": amazon,
 }
 
 DESCRIBERS = {
